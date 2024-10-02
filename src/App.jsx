@@ -443,7 +443,6 @@ function App() {
                             {...row}
                             onDelete={() => deleteRow(index)}
                             onChange={(field, value) => updateRow(index, field, value)}
-                          // showValidation={showValidation}
                           />
                         ))}
                       </TableBody>
@@ -452,11 +451,6 @@ function App() {
                       <Button onClick={addRow} className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded transition duration-300 ease-in-out">Add Row</Button>
                       <Button onClick={calculateGPA} className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded transition duration-300 ease-in-out">Calculate GPA</Button>
                     </div>
-                    {/* {validationError && (
-                      <Alert variant="destructive" className="mt-4">
-                        <AlertDescription>{validationError}</AlertDescription>
-                      </Alert>
-                    )} */}
                     {calculatedGPA !== null && (
                       <div className="flex justify-between items-center mt-6 bg-blue-50 p-4 rounded-lg">
                         <p className="text-xl font-semibold text-blue-800">Cumulative GPA: {calculatedGPA}</p>
