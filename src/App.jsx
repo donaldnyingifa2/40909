@@ -91,27 +91,23 @@ const UserInfoForm = ({ name, school, level, gradingScale, onInputChange, onNext
   </Card>
 );
 
-const GradePointTable = ({ gradingScale, onUpdate }) => {
-  const [gradePoints, setGradePoints] = useState({});
+const GradePointTable = ({ gradePoints, onUpdate }) => {
+  const [localGradePoints, setLocalGradePoints] = useState({});
   const [successMessage, setSuccessMessage] = useState('');
 
   useEffect(() => {
-    const scale = Number(gradingScale);
-    const defaultPoints = scale === 4.0 ?
-      { A: 4, B: 3, C: 2, D: 1, F: 0 } :
-      { A: 5, B: 4, C: 3, D: 2, E: 1, F: 0 };
-    setGradePoints(defaultPoints);
-  }, [gradingScale]);
+    setLocalGradePoints(gradePoints);
+  }, [gradePoints]);
 
   const handleInputChange = (grade, value) => {
-    setGradePoints(prev => ({
+    setLocalGradePoints(prev => ({
       ...prev,
       [grade]: Number(value)
     }));
   };
 
   const handleSubmit = () => {
-    onUpdate(gradePoints);
+    onUpdate(localGradePoints);
     setSuccessMessage('Grade points updated successfully!');
     setTimeout(() => setSuccessMessage(''), 3000);
   };
@@ -130,7 +126,7 @@ const GradePointTable = ({ gradingScale, onUpdate }) => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {Object.entries(gradePoints).map(([grade, points]) => (
+            {Object.entries(localGradePoints).map(([grade, points]) => (
               <TableRow key={grade}>
                 <TableCell className="font-medium text-gray-800">{grade}</TableCell>
                 <TableCell>
@@ -161,8 +157,8 @@ const GradePointTable = ({ gradingScale, onUpdate }) => {
   );
 };
 
-const GradeRow = ({ course, credits, grade, onDelete, onChange }) => {
-  const gradeOptions = ['A', 'B', 'C', 'D', 'E', 'F'];
+const GradeRow = ({ course, credits, grade, gradingScale, onDelete, onChange }) => {
+  const gradeOptions = gradingScale === '5.0' ? ['A', 'B', 'C', 'D', 'E', 'F'] : ['A', 'B', 'C', 'D', 'F'];
 
   return (
     <TableRow>
@@ -267,6 +263,14 @@ function App() {
   const [isAchievable, setIsAchievable] = useState(true);
   const [gradePoints, setGradePoints] = useState({});
 
+  useEffect(() => {
+    const scale = Number(userInfo.gradingScale);
+    const defaultPoints = scale === 4.0 ?
+      { A: 4, B: 3, C: 2, D: 1, F: 0 } :
+      { A: 5, B: 4, C: 3, D: 2, E: 1, F: 0 };
+    setGradePoints(defaultPoints);
+  }, [userInfo.gradingScale]);
+
   const handleUserInfoChange = (field, value) => {
     setUserInfo(prev => ({ ...prev, [field]: value }));
     setError('');
@@ -303,9 +307,7 @@ function App() {
   const calculateGPA = () => {
     let totalCredits = rows.reduce((sum, row) => sum + Number(row.credits || 0), 0);
     let totalGradePoints = rows.reduce((sum, row) => {
-      let gradePoint = (userInfo.gradingScale === '4.0' ?
-        { 'A': 4, 'B': 3, 'C': 2, 'D': 1, 'F': 0 }[row.grade.toUpperCase()] :
-        { 'A': 5, 'B': 4, 'C': 3, 'D': 2, 'E': 1, 'F': 0 }[row.grade.toUpperCase()]) || 0;
+      let gradePoint = gradePoints[row.grade.toUpperCase()] || 0;
       return sum + (gradePoint * Number(row.credits || 0));
     }, 0);
 
@@ -318,9 +320,7 @@ function App() {
     const data = [
       ['Course', 'Credits', 'Grade', 'Grade Points'],
       ...rows.filter(row => row.course || row.credits || row.grade).map(row => {
-        const gradePoint = (userInfo.gradingScale === '4.0' ?
-          { 'A': 4, 'B': 3, 'C': 2, 'D': 1, 'F': 0 }[row.grade.toUpperCase()] :
-          { 'A': 5, 'B': 4, 'C': 3, 'D': 2, 'E': 1, 'F': 0 }[row.grade.toUpperCase()]) || 0;
+        const gradePoint = gradePoints[row.grade.toUpperCase()] || 0;
         return [
           row.course || 'N/A',
           row.credits || 'N/A',
@@ -403,7 +403,7 @@ function App() {
                 </CardHeader>
                 <CardContent className="px-0 pb-0">
                   <GradePointTable
-                    gradingScale={userInfo.gradingScale}
+                    gradePoints={gradePoints}
                     onUpdate={handleGradePointUpdate}
                   />
                 </CardContent>
@@ -441,9 +441,9 @@ function App() {
                           <GradeRow
                             key={index}
                             {...row}
+                            gradingScale={userInfo.gradingScale}
                             onDelete={() => deleteRow(index)}
                             onChange={(field, value) => updateRow(index, field, value)}
-                          // showValidation={showValidation}
                           />
                         ))}
                       </TableBody>
@@ -452,11 +452,6 @@ function App() {
                       <Button onClick={addRow} className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded transition duration-300 ease-in-out">Add Row</Button>
                       <Button onClick={calculateGPA} className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded transition duration-300 ease-in-out">Calculate GPA</Button>
                     </div>
-                    {/* {validationError && (
-                      <Alert variant="destructive" className="mt-4">
-                        <AlertDescription>{validationError}</AlertDescription>
-                      </Alert>
-                    )} */}
                     {calculatedGPA !== null && (
                       <div className="flex justify-between items-center mt-6 bg-blue-50 p-4 rounded-lg">
                         <p className="text-xl font-semibold text-blue-800">Cumulative GPA: {calculatedGPA}</p>
